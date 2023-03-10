@@ -85,3 +85,36 @@ void pool_destroy(pool_t *pool) {
     pthread_cond_destroy(&pool->queue_ready);
     free(pool);
 }
+
+int pool_add_task(pool_t *pool, void *(thread_work)(void *), void *args) {
+    pool_work_t *work, *member;
+
+    if (thread_work == NULL) {
+        return -1;
+    }
+
+    work = (pool_work_t *)malloc(sizeof(pool_work_t));
+    if (work == NULL) {
+        return -1;
+    }
+
+    work->work = thread_work;
+    work->args = args;
+    work->next = NULL;
+
+    pthread_mutex_lock(&pool->queue_lock);
+    member = pool->pool_head;
+    if (member == NULL) {
+        pool->pool_head = work;
+    } else {
+        while (member->next != NULL) {
+            member = (pool_work_t *)member->next;
+        }
+        member->next = work;
+    }
+
+    pthread_cond_signal(&pool->queue_ready);
+    pthread_mutex_unlock(&pool->queue_lock);
+
+    return 0;
+}
