@@ -22,7 +22,7 @@ typedef struct pool {
 
 // create a pool
 // return 0 for success; -1 for failure
-int pool_create(pool_t *pool, size_t max_thread);
+int pool_create(pool_t **pool, size_t max_thread);
 
 // destroy the pool;
 void pool_destroy(pool_t *pool);

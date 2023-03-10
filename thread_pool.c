@@ -32,27 +32,27 @@ static void *thread_work(void * args) {
     return NULL;
 }
 
-int pool_create(pool_t *pool, size_t max_size) {
-    pool = (pool_t *)malloc(sizeof(pool_t));
-    if (pool == NULL) {
+int pool_create(pool_t **pool, size_t max_size) {
+    *pool = (pool_t *)malloc(sizeof(pool_t));
+    if (*pool == NULL) {
         return -1;
     }
-    pool->shutdown = 0;
-    pool->max_thread = max_size;
-    pool->thread_id = (pthread_t *)malloc(sizeof(pthread_t) * pool->max_thread);
-    if (pool->thread_id == NULL) {
+    (*pool)->shutdown = 0;
+    (*pool)->max_thread = max_size;
+    (*pool)->thread_id = (pthread_t *)malloc(sizeof(pthread_t) * (*pool)->max_thread);
+    if ((*pool)->thread_id == NULL) {
         return -1;
     }
-    pool->pool_head = NULL;
-    if (pthread_mutex_init(&pool->queue_lock, NULL) != 0) {
+    (*pool)->pool_head = NULL;
+    if (pthread_mutex_init(&(*pool)->queue_lock, NULL) != 0) {
         return -1;
     }
-    if (pthread_cond_init(&pool->queue_ready, NULL) != 0) {
+    if (pthread_cond_init(&(*pool)->queue_ready, NULL) != 0) {
         return -1;
     }
 
-    for (int i = 0; i < pool->max_thread; i++) {
-        if (pthread_create(&(pool->thread_id[i]), NULL, thread_work, (void *)pool) != 0) {
+    for (int i = 0; i < (*pool)->max_thread; i++) {
+        if (pthread_create(&((*pool)->thread_id[i]), NULL, thread_work, (void *)(*pool)) != 0) {
             return -1;
         }        
     }
