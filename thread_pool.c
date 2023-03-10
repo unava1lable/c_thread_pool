@@ -58,3 +58,30 @@ int pool_create(pool_t *pool, size_t max_size) {
     }
     return 0;
 }
+
+void pool_destroy(pool_t *pool) {
+    pool_work_t *temp_work;
+
+    if (pool->shutdown) {
+        return;
+    }
+    pool->shutdown = 1;
+
+    pthread_mutex_lock(&pool->queue_lock);
+    pthread_cond_broadcast(&pool->queue_ready);
+    pthread_mutex_unlock(&pool->queue_lock);
+
+    for (int i = 0; i < pool->max_thread; i++) {
+        pthread_join(pool->thread_id[i], NULL);
+    }
+
+    free(pool->thread_id);
+    while (pool->pool_head) {
+        temp_work = pool->pool_head;
+        pool->pool_head = (pool_work_t *)pool->pool_head->next;
+        free(temp_work);
+    }
+    pthread_mutex_destroy(&pool->queue_lock);
+    pthread_cond_destroy(&pool->queue_ready);
+    free(pool);
+}
